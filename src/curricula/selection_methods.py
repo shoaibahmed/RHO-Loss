@@ -1,3 +1,4 @@
+import os
 import torch
 import numpy as np
 import wandb
@@ -401,6 +402,102 @@ class ce_loss_selection:
         ]  # I (Jan) did not understand why this key/value pair was here in the first place, so I left it here for now.
 
         irreducible_loss = None
+        return selected_minibatch, metrics_to_log, irreducible_loss
+
+
+class probe_cls_selection:
+    bald = False
+
+    def __call__(
+        self,
+        selected_batch_size,
+        data,
+        target,
+        global_index,
+        large_model=None,
+        irreducible_loss_generator=None,
+        proxy_model=None,
+        *args,
+        **kwargs,
+    ):
+        """
+        Selects samples by classifying them using the probes -- only return typical samples
+        Assumes that we have whole loss trajectories at each point in training
+        Also assumes that we have whole loss trajectories for the validation set
+        TODO: Implement these trajectory 
+        Args:
+            selected_batch_size: int, number of samples to be selected
+            data: tensor, data of sample
+            target: tensor, label/target of sample
+            global_index: tensor, the (global) indices of the datapoints in <data>, w.r.t. to the whole dataset
+            large_model: nn.Module, PyTorch Model of the large model
+            irreducible_loss_generator: Tensor or nn.Module [Not Required]
+                Tensor: with irreducible losses for train set, ordered by <global_index> (see datamodules)
+                nn.Module: irreducible loss model
+            proxy_model: nn.Module, PyTorch Model of the model that acts as a proxy for the large model
+        Returns:
+            selected_minibatch: tensor, of (local) indices of the selected samples (wrt to the current minibatch)
+            metrics_to_log: dictionary, of metrics to log
+        """
+        assert irreducible_loss_generator is None
+    
+        with torch.no_grad():
+            if proxy_model is not None:
+                model_loss = F.cross_entropy(
+                    proxy_model(data), target, reduction="none"
+                )
+            else:
+                model_loss = F.cross_entropy(
+                    large_model(data), target, reduction="none"
+                )
+            
+            # TODO: Append the loss values into the loss trajectory list
+            # TODO: How to retrieve and evaluate on the validation set? Maybe store a small fraction of it
+            # Show it works for just 250 probe examples from each category -- cache them here directly (apply augmentations)
+            
+            # TODO: Load the validation set
+            probe_examples_file = None
+            if not os.path.exists(probe_examples_file):
+                # TODO: Generate the probe example set from the complete holdout validation set
+                pass
+            probe_examples = np.load(probe_examples_file)
+            assert isinstance(probe_examples, dict)  # Same as last format
+
+            selected_minibatch, not_selected_minibatch = top_x_indices(
+                model_loss, selected_batch_size, largest=True
+            )
+
+        # compute what proportion of the loss is made up of the points with the highest 20% losses
+        batch_size = len(
+            data
+        )  # get big batch size, to compute what proportion of the batch model loss is made up by the points in the batch with the highest loss
+        model_loss_sorted, _ = torch.sort(model_loss, descending=True)
+        percentage_top_20 = torch.sum(
+            model_loss_sorted[: int(0.2 * batch_size)]
+        ) / torch.sum(model_loss_sorted)
+
+        # Define the metrics that you want to log. Will log the metrics for
+        # selected and not-selected points separately.
+        variables_to_log = {
+            "id": global_index,
+            "model_loss": model_loss,
+        }
+
+        metrics_to_log = create_logging_dict(
+            variables_to_log, selected_minibatch, not_selected_minibatch
+        )
+
+        metrics_to_log[
+            "proportion_of_total_batch_loss_corresponding_to_the_top_20%_points_with_highest_loss"
+        ] = float(percentage_top_20)
+
+        metrics_to_log["detailed_only_keys"] = [
+            "selected_id",
+            "not_selected_id",
+        ]  # I (Jan) did not understand why this key/value pair was here in the first place, so I left it here for now.
+
+        irreducible_loss = None
+        raise NotImplementedError
         return selected_minibatch, metrics_to_log, irreducible_loss
 
 

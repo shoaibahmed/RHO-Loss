@@ -15,7 +15,7 @@ defaults:
 seed: 12
 
 datamodule:
-  data_dir: '/scratch-ssd/goldiprox/data/'
+  data_dir: '/mnt/sas/Datasets/'
   batch_size: 320
   num_workers: 4
   pin_memory: True

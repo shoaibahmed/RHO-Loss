@@ -1,5 +1,5 @@
 _target_: src.datamodules.datamodules.ImageNetDataModule
-data_dir: '/scratch-ssd/oatml/data/imagenet/'
+data_dir: '/mnt/sas/Datasets/ilsvrc12/'
 batch_size: 1280
 num_workers: 5
 pin_memory: True

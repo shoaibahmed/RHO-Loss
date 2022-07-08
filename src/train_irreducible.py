@@ -95,7 +95,8 @@ def train(config: DictConfig) -> Optional[float]:
     # Evaluate model on test set, using the best model achieved during training
     if config.get("test_after_training") and not config.trainer.get("fast_dev_run"):
         log.info("Starting testing!")
-        trainer.test(test_dataloaders=datamodule.test_dataloader())
+        # trainer.test(test_dataloaders=datamodule.test_dataloader())
+        trainer.test(dataloaders=datamodule.test_dataloader())
 
     ## Use this if you want to compute the irred losses for a model you have already trained
     # trainer.checkpoint_callback.best_model_path = "/path/to/model"

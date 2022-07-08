@@ -1,7 +1,7 @@
 # @package _global_
 
 defaults:
-  - override /model/model: c1m_resnet18
+  - override /model/model: c1m_resnet18_pretrained
   - override /datamodule: clothing1m_dirty_datamodule
   - override /callbacks: val_loss
 

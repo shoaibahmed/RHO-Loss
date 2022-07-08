@@ -20,7 +20,7 @@ from src.utils.utils import unmask_config
 import hydra
 
 from src.datamodules.datamodules import CINIC10RelevanceDataModule, Clothing1MDataModule
-from src.curricula.selection_methods import reducible_loss_selection, irreducible_loss_selection, gradnorm_ub_selection, ce_loss_selection, uniform_selection
+from src.curricula.selection_methods import reducible_loss_selection, irreducible_loss_selection, gradnorm_ub_selection, ce_loss_selection, probe_cls_selection, uniform_selection
 import pdb
 
 class MultiModels(pl.LightningModule):
@@ -50,7 +50,7 @@ class MultiModels(pl.LightningModule):
              Tensor: with irreducible losses for train set, ordered by <index> (see datamodules)
              nn.Module: irreducible loss model
             proxy_model: nn.Module, a model that acts as proxy for large_model
-            selection_method: callable class, selection method. current available options include: reducible loss, irreducible loss, ce_loss, uniform, bald
+            selection_method: callable class, selection method. current available options include: reducible loss, irreducible loss, ce_loss, probe_cls, uniform, bald
             learning_rate: float, learning rate for all models
             percent_train: float [0-1], the percent of each batch to train on
             update_irreducible: bool, update irreducible loss model with respect to training data
@@ -101,6 +101,7 @@ class MultiModels(pl.LightningModule):
                 reducible_loss_selection(),
                 gradnorm_ub_selection(),
                 ce_loss_selection(),
+                probe_cls_selection(),
                 irreducible_loss_selection(),
                 uniform_selection()
                 ]
@@ -108,6 +109,7 @@ class MultiModels(pl.LightningModule):
                 "redloss",
                 "gradnorm",
                 "ce_loss",
+                "probe_cls",
                 "irred_loss",
                 "uniform"
                 ]

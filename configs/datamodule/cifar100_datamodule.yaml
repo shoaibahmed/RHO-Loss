@@ -4,7 +4,7 @@ defaults:
   - testset_corruption: null #can be overriden!
 
 _target_: src.datamodules.datamodules.CIFAR100DataModule
-data_dir: '/scratch-ssd/goldiprox/data/'
+data_dir: '/mnt/sas/Datasets/'
 batch_size: 320
 num_workers: 4
 pin_memory: True
