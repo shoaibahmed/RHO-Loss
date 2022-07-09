@@ -120,7 +120,7 @@ class MultiModels(pl.LightningModule):
     def forward(self, x):
         x = self.large_model(x)
         return x
-
+    
     def training_step(self, batch, batch_idx):
         global_index, data, target = batch
         batch_size = len(data)

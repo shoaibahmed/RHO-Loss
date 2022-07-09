@@ -16,6 +16,7 @@ import torch.nn as nn
 
 from src.utils import utils
 from src.models.OneModel import OneModel
+from src.traj_trainer import TrajTrainer
 
 log = utils.get_logger(__name__)
 
@@ -111,6 +112,16 @@ def train(config: DictConfig) -> Optional[float]:
     trainer: Trainer = hydra.utils.instantiate(
         config.trainer, callbacks=callbacks, logger=logger, _convert_="partial"
     )
+    
+    # TODO: Somehow override the trainer -> fit_loop -> on_advance_start
+    """Related docs
+    https://pytorch-lightning.readthedocs.io/en/stable/_modules/pytorch_lightning/core/lightning.html#LightningModule
+    https://pytorch-lightning.readthedocs.io/en/stable/_modules/pytorch_lightning/loops/fit_loop.html#FitLoop.advance
+    https://pytorch-lightning.readthedocs.io/en/stable/_modules/pytorch_lightning/trainer/trainer.html#Trainer
+    """
+    if isinstance(trainer, TrajTrainer):
+        log.info("! Using trajectory trainer...")
+        trainer.initalize_models(pl_model, datamodule.train_dataloader(), val_dataloader)
 
     # Send config to all lightning loggers
     log.info("Logging hyperparameters!")
