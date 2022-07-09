@@ -113,6 +113,9 @@ class MultiModels(pl.LightningModule):
                 "irred_loss",
                 "uniform"
                 ]
+        
+        self.train_loss_trajectories = None
+        self.probe_loss_trajectories = None
 
     def forward(self, x):
         x = self.large_model(x)
@@ -128,18 +131,32 @@ class MultiModels(pl.LightningModule):
         else:
             self.large_model.eval() # switch to eval mode to compute selection
         ### Selection Methods
-        selected_indices, metrics_to_log, irreducible_loss = self.selection_method(
-            selected_batch_size=selected_batch_size,
-            data=data,
-            target=target,
-            global_index=global_index,
-            large_model=self.large_model,
-            irreducible_loss_generator=self.irreducible_loss_generator,
-            proxy_model=self.proxy_model,
-            current_epoch=self.current_epoch,  # not used by all methods, but needed for annealing
-            num_classes=self.datamodule.num_classes
-        )  # irreducible_loss will be None if the selection_method does not involve
-        # irreducible_loss computation (e.g. uniform, CE loss selection)
+        if isinstance(self.selection_method, probe_cls_selection):
+            selected_indices, metrics_to_log, irreducible_loss = self.selection_method(
+                selected_batch_size=selected_batch_size,
+                data=data,
+                target=target,
+                global_index=global_index,
+                large_model=self.large_model,
+                irreducible_loss_generator=self.irreducible_loss_generator,
+                proxy_model=self.proxy_model,
+                current_epoch=self.current_epoch,  # not used by all methods, but needed for annealing
+                num_classes=self.datamodule.num_classes,
+                probe_loss_trajectories=probe_loss_trajectories,
+            )  # irreducible_loss will be None if the selection_method does not involve
+        else:
+            selected_indices, metrics_to_log, irreducible_loss = self.selection_method(
+                selected_batch_size=selected_batch_size,
+                data=data,
+                target=target,
+                global_index=global_index,
+                large_model=self.large_model,
+                irreducible_loss_generator=self.irreducible_loss_generator,
+                proxy_model=self.proxy_model,
+                current_epoch=self.current_epoch,  # not used by all methods, but needed for annealing
+                num_classes=self.datamodule.num_classes
+            )  # irreducible_loss will be None if the selection_method does not involve
+        # irreducible_loss computation (e.g. uniform, CE loss selection, probe classification)
         self.large_model.train()  # switch to eval mode to compute selection
 
         pc_corrupted = self.datamodule.percentage_corrupted(
