@@ -130,6 +130,10 @@ class MultiModels(pl.LightningModule):
             self.large_model.train()
         else:
             self.large_model.eval() # switch to eval mode to compute selection
+        
+        self.log("Probe loss trajectories shape:", self.probe_loss_trajectories.shape)
+        self.log("Train loss trajectories shape:", self.train_loss_trajectories.shape)
+        
         ### Selection Methods
         if isinstance(self.selection_method, probe_cls_selection):
             selected_indices, metrics_to_log, irreducible_loss = self.selection_method(
@@ -142,7 +146,8 @@ class MultiModels(pl.LightningModule):
                 proxy_model=self.proxy_model,
                 current_epoch=self.current_epoch,  # not used by all methods, but needed for annealing
                 num_classes=self.datamodule.num_classes,
-                probe_loss_trajectories=probe_loss_trajectories,
+                probe_loss_trajectories=self.probe_loss_trajectories,
+                train_loss_trajectories=self.train_loss_trajectories,
             )  # irreducible_loss will be None if the selection_method does not involve
         else:
             selected_indices, metrics_to_log, irreducible_loss = self.selection_method(
